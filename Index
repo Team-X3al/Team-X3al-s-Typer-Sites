@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEXT PAD</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background-color: #000000;
+      color: #00ff66;
+      font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Consolas', monospace;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 16px;
+      gap: 12px;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #005522;
+    }
+    .title-area { display: flex; align-items: center; gap: 10px; }
+    h1 { font-size: 1.05rem; color: #00ff66; }
+    .lang-badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border: 1px solid #00aa44;
+      border-radius: 4px;
+      background-color: #000000;
+      color: #00ff66;
+    }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      background-color: #000000;
+      color: #00ff66;
+      border: 1px solid #00aa44;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    button:hover { background-color: #002211; border-color: #00ff66; }
+    main { flex: 1; display: flex; flex-direction: column; }
+    textarea {
+      flex: 1;
+      width: 100%;
+      min-height: 65vh;
+      background-color: #000000;
+      color: #00ff66;
+      caret-color: #00ff66;
+      border: 1px solid #00aa44;
+      border-radius: 8px;
+      padding: 18px;
+      font-family: inherit;
+      font-size: 18px;
+      line-height: 1.65;
+      resize: none;
+      outline: none;
+    }
+    textarea:focus { border-color: #00ff66; }
+    textarea::placeholder { color: #007733; }
+    footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #00cc55;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-area">
+      <h1>TEXT PAD</h1>
+      <span class="lang-badge">한글 / English</span>
+    </div>
+    <div class="toolbar">
+      <button type="button" id="fontDownBtn">A-</button>
+      <button type="button" id="fontUpBtn">A+</button>
+      <button type="button" id="copyBtn">복사</button>
+      <button type="button" id="downloadBtn">저장 (.txt)</button>
+      <button type="button" id="clearBtn">지우기</button>
+    </div>
+  </header>
+
+  <main>
+    <textarea id="editor" spellcheck="false" placeholder="여기에 한글과 영어를 자유롭게 입력하세요... / Type Korean or English here..."></textarea>
+  </main>
+
+  <footer>
+    <div id="stats">글자 수: 0 | 단어 수: 0 | 줄 수: 1 | 크기: 18px</div>
+    <div id="statusMsg"></div>
+  </footer>
+
+  <script>
+    (function () {
+      const editor = document.getElementById('editor');
+      const statsEl = document.getElementById('stats');
+      const statusEl = document.getElementById('statusMsg');
+      let fontSize = 18;
+      let timer = null;
+
+      function showStatus(msg) {
+        statusEl.textContent = msg;
+        clearTimeout(timer);
+        timer = setTimeout(function () { statusEl.textContent = ''; }, 2000);
+      }
+
+      function updateStats() {
+        const text = editor.value;
+        const trimmed = text.trim();
+        const words = trimmed ? trimmed.split(/\s+/).length : 0;
+        const lines = text === '' ? 1 : text.split('\n').length;
+        statsEl.textContent = '글자 수: ' + text.length + ' | 단어 수: ' + words + ' | 줄 수: ' + lines + ' | 크기: ' + fontSize + 'px';
+      }
+
+      editor.addEventListener('input', updateStats);
+
+      document.getElementById('fontDownBtn').addEventListener('click', function () {
+        if (fontSize > 12) { fontSize -= 2; editor.style.fontSize = fontSize + 'px'; updateStats(); }
+      });
+
+      document.getElementById('fontUpBtn').addEventListener('click', function () {
+        if (fontSize < 40) { fontSize += 2; editor.style.fontSize = fontSize + 'px'; updateStats(); }
+      });
+
+      document.getElementById('copyBtn').addEventListener('click', function () {
+        if (!editor.value) return showStatus('복사할 내용이 없습니다.');
+        editor.select();
+        try {
+          document.execCommand('copy');
+          showStatus('복사되었습니다.');
+        } catch (e) {
+          showStatus('복사에 실패했습니다.');
+        }
+      });
+
+      document.getElementById('downloadBtn').addEventListener('click', function () {
+        const blob = new Blob([editor.value], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'notes.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showStatus('notes.txt 저장 완료');
+      });
+
+      document.getElementById('clearBtn').addEventListener('click', function () {
+        editor.value = '';
+        updateStats();
+        editor.focus();
+        showStatus('내용을 지웠습니다.');
+      });
+
+      updateStats();
+    })();
+  </script>
+</body>
+</html>
